@@ -1,0 +1,136 @@
+hostname:debsu
+domain: sonnet.edu
+# add user to sudoer group
+su -
+usermod -a -G sudo username
+# install miniconda 
+conda create -n default_env pandas matplotlib scikit-learn jupyter
+# install python3-pip python3-venv zathura lshw emacs git 
+sudo apt install python3-pip python3-venv zathura lshw emacs git gparted xfce4-taskmanager qbittorrent 
+# pyenv installation source: https://github.com/pyenv/pyenv#installation
+sudo apt-get install -y make build-essential libssl-dev zlib1g-dev libbz2-dev \
+libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev libncursesw5-dev \
+xz-utils tk-dev libffi-dev liblzma-dev python-openssl git
+
+# configuration for spacemacs
+mkdir ~/.emacs.d
+git clone https://github.com/syl20bnr/spacemacs ~/.emacs.d
+# install source code pro fonts from google fonts. Enter following address in google to select all font type for source code pro.
+https://fonts.google.com/?query=source+code&selection.family=Source+Code+Pro:200,200i,300,300i,400,400i,500,500i,600,600i,700,700i,900,900i
+# download the zip files
+mkdir -p ~/.fonts/source_code_pro
+# extract zip files to above directory and run
+fc-cache -f
+# Workaround for emacs 26.1,26.2 bug
+# In ~/.emacs.d/init.el, at the top add following line
+(setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
+# open emacs and emacs will download necessary packages
+# add following in ~/.spacemacs for neotree at startup source:https://github.com/jaypei/emacs-neotree/issues/164
+(defun dotspacemacs/user-config () (add-hook 'window-setup-hook #'neotree-toggle) )
+start using spacemacs
+
+# for wifi configuration
+# source https://wiki.debian.org/wl
+# add debian backport to /etc/apt/source.list
+# deb http://deb.debian.org/debian buster-backports main contrib non-free
+sudo apt install linux-image-$(uname -r|sed 's,[^-]*-[^-]*-,,') linux-headers-$(uname -r|sed 's,[^-]*-[^-]*-,,') broadcom-sta-dkms
+# Unload conflicting modules
+sudo modprobe -r b44 b43 b43legacy ssb brcmsmac bcma
+# Load the wl module:
+sudo modprobe wl
+# if sudo ifconfig command not found use 'ip a' or install net-tools package
+sudo apt install net-tools
+
+# for hybrid graphics: check for xserver-xorg-video-amdgpu, r5 m330 (exo pro) : fiji architecture 
+# source: https://wiki.archlinux.org/index.php/PRIME
+sudo apt-get install firmware-amd-graphics firmware-misc-nonfree
+# testing commands
+xrandr --listproviders
+DRI_PRIME=1 glxinfo | grep "OpenGL renderer"
+# to always use dedicated graphic card add to /etc/environment DPI_PRIME=1 
+sudo nano /etc/environment
+
+# firware realtek 
+# r8169 0000:07:00.0: firmware: failed to load rtl_nic/rtl8106e-1.fw (-2)
+sudo apt install firmware-realtek
+
+# enable tap double click in mousepad
+# source:https://unix.stackexchange.com/questions/337008/activate-tap-to-click-on-touchpad
+sudo apt remove xserver-xorg-input-synaptics (not installed)
+sudo apt install xserver-xorg-input-libinput (already installed)
+# create /etc/X11/xorg.conf.d folder if not present
+sudo mkdir /etc/X11/xorg.conf.d 
+# create 40-libinput.conf 
+echo 'Section "InputClass"
+        Identifier "libinput touchpad catchall"
+        MatchIsTouchpad "on"
+        MatchDevicePath "/dev/input/event*"
+        Driver "libinput"
+        Option "Tapping" "on"
+EndSection' > 40-libinput.conf
+# move to /etc/X11/xorg.conf.d
+sudo cp 40-libinput.conf /etc/X11/xorg.conf.d/
+
+# Keybindings for Terminal and Whiskermenu
+# keyboard > application shortcuts
+xfce4-popup-whiskermenu alt+esc,alt+f1
+exo-open --launch TerminalEmulator Ctrl+Alt+T
+exo-open --launch WebBrowser super+w
+exo-open --launch FileManager super+e
+
+# Windows lock bug
+# source:https://unix.stackexchange.com/questions/101806/why-doesnt-my-screen-lock-in-xfce
+# add light-locker in xflock4 
+# First install light-locker.
+sudo apt install light-locker (already installed)
+# backup /usr/bin/xflock4
+sudo cp /usr/bin/xflock4 /usr/bin/xflock4.bak
+xfconf-query -c xfce4-session -p /general/LockCommand -s "light-locker-command -l"
+#or if you don't have the variable yet:
+xfconf-query -c xfce4-session -p /general/LockCommand -s "light-locker-command -l" --create -t string
+# Above commands add "light-locker-command --lock" to following:
+for lock_cmd in \
+    "xscreensaver-command -lock" \
+    "light-locker-command --lock" \
+    "gnome-screensaver-command --lock" \
+    "mate-screensaver-command --lock"
+do
+    $lock_cmd >/dev/null 2>&1 && exit
+done
+
+
+# To unlock session (bug)
+# workaround: ctrl+alt+f7
+# source:https://github.com/the-cavalry/light-locker/issues/108
+# backup /etc/systemd/logind.conf
+sudo /etc/systemd/logind.conf /etc/systemd/logind.conf.bak
+echo "HandleLidSwitch=ignore" | sudo tee -a /etc/systemd/logind.conf
+echo "HandleLidSwitchExternalPower=ignore" | sudo tee -a /etc/systemd/logind.conf
+
+# enable userlist on login
+# file: 
+sudo nano /usr/share/lightdm/lightdm.conf.d/01_debian.conf 
+greeter-hide-users=false
+
+# pstore: crypto_comp_decompress failed error
+# source:https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=902966
+# back up /sys/fs/pstore
+sudo cp -rav /sys/fs/pstore pstore.bak
+# remove all file in pstore
+sudo rm -rf /sys/fs/pstore/dmesg-efi*
+
+# Bluetooth driver installation
+# error: bluetooth hci0: firmware: failed to load brcm/BCM43142A0-0a5c-216d.hcd (-2)
+# Download .hcd file
+sudo wget -O /lib/firmware/brcm/BCM.hcd https://github.com/winterheart/broadcom-bt-firmware/blob/master/brcm/BCM43142A0-0a5c-21d7.hcd
+# copy file to /lib/firmware/brcm
+mkdir -p /lib/firmware/brcm
+cp BCM43142A0-0a5c-21d7.hcd /lib/firmware/brcm
+# install blueman
+sudo apt install blueman
+
+
+
+
+
+ 

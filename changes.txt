@@ -122,10 +122,10 @@ sudo rm -rf /sys/fs/pstore/dmesg-efi*
 # Bluetooth driver installation
 # error: bluetooth hci0: firmware: failed to load brcm/BCM43142A0-0a5c-216d.hcd (-2)
 # Download .hcd file
-sudo wget -O /lib/firmware/brcm/BCM.hcd https://github.com/winterheart/broadcom-bt-firmware/blob/master/brcm/BCM43142A0-0a5c-21d7.hcd
+sudo wget https://github.com/winterheart/broadcom-bt-firmware/blob/master/brcm/BCM43142A0-0a5c-216d.hcd
 # copy file to /lib/firmware/brcm
 mkdir -p /lib/firmware/brcm
-cp BCM43142A0-0a5c-21d7.hcd /lib/firmware/brcm
+cp BCM43142A0-0a5c-216d.hcd /lib/firmware/brcm
 # install blueman
 sudo apt install blueman
 

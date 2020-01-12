@@ -128,6 +128,9 @@ mkdir -p /lib/firmware/brcm
 cp BCM43142A0-0a5c-216d.hcd /lib/firmware/brcm
 # install blueman
 sudo apt install blueman
+# useful command
+sudo modprobe -r btusb
+sudo modprobe btusb
 
 
 

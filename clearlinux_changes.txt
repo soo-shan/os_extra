@@ -1,0 +1,84 @@
+## change to root
+$ sudo -i
+## mount /dev/sdb1 as /home 
+# mount /dev/sdb1 /home
+#
+
+
+## Enable wifi for broadcom 43142
+## Source: https://community.clearlinux.org/t/how-to-install-driver-for-broadcom-43142/1614/17
+## Blacklist brcm
+## Change to root
+$ sudo -i
+# mkdir /etc/modprobe.d
+# echo "blacklist bcma" > /etc/modprobe.d/broadcom.conf
+## install packages for dkms
+## source: https://docs.01.org/clearlinux/latest/guides/kernel/kernel-modules-dkms.html#kernel-modules-dkms
+## useful command: sudo clr-boot-manager list-kernels
+# swupd bundle-add kernel-native-dkms
+# clr-boot-manager update
+## Reboot
+$ git clone https://github.com/antoineco/broadcom-wl.git
+$ sudo cp -R broadcom-wl/ /usr/src/broadcom-wl-6.30.223.271
+# dkms install -m broadcom-wl -v 6.30.223.271
+$ modinfo wl
+## if wl does not load then
+# mkdir /etc/modules-load.d/
+# echo "wl" > /etc/modprobe.d/broadcom.conf
+## remove brcm and add wl
+# modprobe -r bcma
+# modprobe wl
+
+## Enable bluetooth
+# cp BCM43142A0-0a5c-216d.hcd /lib/firmware/brcm/
+# modprobe -r bluetooth
+# modprobe bluetooth
+## bluetooth commands: rfkill unblock bluetooth
+
+## Installing packages
+# swupd bundle-add machine-learning-basic
+## install vlc flatpak for better support
+
+## install vscode
+## source: https://community.clearlinux.org/t/need-native-support-for-vs-code-through-swupd/1112/21
+# swupd bundle-add dnf
+## change release version in url below
+# rpm -ivh --nodeps https://github.com/VSCodium/vscodium/releases/download/1.36.1/codium-1.36.1-1562700284.el7.x86_64.rpm
+
+## install master pdf editor
+## get deb file from https://code-industry.net/public/master-pdf-editor-4.3.89_qt5.x86_64.rpm
+# rpm -ivh master-pdf-editor-4.3.89_qt5.x86_64.rpm
+
+## install pycharm
+## Download pycharm source tar from
+## Source: https://www.jetbrains.com/help/pycharm/installation-guide.html#snap-install-tar
+$ sudo tar xfz pycharm-*.tar.gz -C /opt/
+$ cd /opt/pycharm-*/bin
+$ sh pycharm.sh
+## Inotify Watches Limit warning
+## source: https://confluence.jetbrains.com/display/IDEADEV/Inotify+Watches+Limit
+## source: https://docs.01.org/clearlinux/latest/guides/maintenance/resource-limits.html
+## get file from https://gist.github.com/bittner/c7d1d49fe0c9af907f24
+$ sudo -i
+# mkdir /etc/sysctl.d/
+# nano /etc/sysctl.d/60-jetbrains.conf
+## paste following to file
+-----------------------------------------------
+# Set inotify watch limit high enough for IntelliJ IDEA (PhpStorm, PyCharm, RubyMine, WebStorm).
+# Create this file as /etc/sysctl.d/60-jetbrains.conf (Debian, Ubuntu), and
+# run `sudo service procps start` or reboot.
+# Source: https://confluence.jetbrains.com/display/IDEADEV/Inotify+Watches+Limit
+# Source: https://docs.01.org/clearlinux/latest/guides/maintenance/resource-limits.html
+# More information resources:
+# -$ man inotify  # manpage
+# -$ man sysctl.conf  # manpage
+# -$ cat /proc/sys/fs/inotify/max_user_watches  # print current value in use
+
+fs.inotify.max_user_watches = 524288
+-----------------------------------------------------------------
+
+## install KVM
+## source: https://community.clearlinux.org/t/use-clear-for-a-vm-host/279/7
+# swupd bundle-add virt-manager-gui
+# systemctl enable libvirtd.service
+# systemctl start libvirtd.service

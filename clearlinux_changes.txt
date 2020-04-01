@@ -3,8 +3,7 @@ $ sudo -i
 ## mount /dev/sdb1 as /home 
 # mount /dev/sdb1 /home
 #
-
-
+-----------------------------------------------------------------
 ## Enable wifi for broadcom 43142
 ## Source: https://community.clearlinux.org/t/how-to-install-driver-for-broadcom-43142/1614/17
 ## Blacklist brcm
@@ -34,21 +33,23 @@ $ modinfo wl
 # modprobe -r bluetooth
 # modprobe bluetooth
 ## bluetooth commands: rfkill unblock bluetooth
-
+-----------------------------------------------------------------
 ## Installing packages
 # swupd bundle-add machine-learning-basic
 ## install vlc flatpak for better support
-
+-----------------------------------------------------------------
 ## install vscode
 ## source: https://community.clearlinux.org/t/need-native-support-for-vs-code-through-swupd/1112/21
 # swupd bundle-add dnf
 ## change release version in url below
 # rpm -ivh --nodeps https://github.com/VSCodium/vscodium/releases/download/1.36.1/codium-1.36.1-1562700284.el7.x86_64.rpm
 
+-----------------------------------------------------------------
 ## install master pdf editor
-## get deb file from https://code-industry.net/public/master-pdf-editor-4.3.89_qt5.x86_64.rpm
+## get rpm file from https://code-industry.net/public/master-pdf-editor-4.3.89_qt5.x86_64.rpm
 # rpm -ivh master-pdf-editor-4.3.89_qt5.x86_64.rpm
 
+-----------------------------------------------------------------
 ## install pycharm
 ## Download pycharm source tar from
 ## Source: https://www.jetbrains.com/help/pycharm/installation-guide.html#snap-install-tar
@@ -63,7 +64,7 @@ $ sudo -i
 # mkdir /etc/sysctl.d/
 # nano /etc/sysctl.d/60-jetbrains.conf
 ## paste following to file
------------------------------------------------
+================================================
 # Set inotify watch limit high enough for IntelliJ IDEA (PhpStorm, PyCharm, RubyMine, WebStorm).
 # Create this file as /etc/sysctl.d/60-jetbrains.conf (Debian, Ubuntu), and
 # run `sudo service procps start` or reboot.
@@ -75,10 +76,32 @@ $ sudo -i
 # -$ cat /proc/sys/fs/inotify/max_user_watches  # print current value in use
 
 fs.inotify.max_user_watches = 524288
------------------------------------------------------------------
+================================================
 
+-----------------------------------------------------------------
 ## install KVM
 ## source: https://community.clearlinux.org/t/use-clear-for-a-vm-host/279/7
 # swupd bundle-add virt-manager-gui
 # systemctl enable libvirtd.service
 # systemctl start libvirtd.service
+
+-----------------------------------------------------------------
+## set metered network
+## source: https://unix.stackexchange.com/questions/364927/networkmanager-set-current-connection-of-device-as-metered
+$ nmcli -t -f GENERAL.CONNECTION --mode tabular device show $DEVICE | head -n1
+# replace $CONNECTION below with output of above command 
+$ nmcli -f connection.metered connection show $CONNECTION
+# change state of connection
+$ nmcli connection modify $CONNECTION connection.metered yes
+
+-----------------------------------------------------------------
+flatpaks
+Celluloid
+
+-----------------------------------------------------------------
+## vim configuration
+## config file location: ~/.vim/vimrc
+## plugin manager: vim-plug
+## source: https://github.com/junegunn/vim-plug
+## 
+ 

@@ -30,6 +30,11 @@ au BufNewFile,BufRead *.py
 " UTF-8 Support
 set encoding=utf-8
 
+" Keep backup, swap files at one place
+" source: https://www.reddit.com/r/vim/comments/fvtln7/how_to_remove_un_and_md_files_after_quitting_vim/
+set backupdir=~/.vim/backup//
+set directory=~/.vim/swap//
+set undodir=~/.vim/undo//
 
 " Source: https://github.com/neoclide/coc.nvim#example-vim-configuration 
 " TextEdit might fail if hidden is not set.

@@ -33,21 +33,34 @@ $ modinfo wl
 # modprobe -r bluetooth
 # modprobe bluetooth
 ## bluetooth commands: rfkill unblock bluetooth
+
+## Disable internal WIFI
+## source : https://askubuntu.com/questions/537908/how-do-i-disable-the-default-broadcom-wireless-driver-in-favor-of-a-windows-driv
+# sudo lshw -C network
+# modprobe -r wl
+## Add following line to /etc/modprobe.d/blacklist.conf
+blacklist wl
+
 -----------------------------------------------------------------
 ## Installing packages
 # swupd bundle-add machine-learning-basic
 ## install vlc flatpak for better support
 -----------------------------------------------------------------
 ## install vscode
-## source: https://community.clearlinux.org/t/need-native-support-for-vs-code-through-swupd/1112/21
-# swupd bundle-add dnf
-## change release version in url below
-# rpm -ivh --nodeps https://github.com/VSCodium/vscodium/releases/download/1.36.1/codium-1.36.1-1562700284.el7.x86_64.rpm
+## Download source file: https://code.visualstudio.com/download
+## place downloaded source to /opt
+## executable at /opt/vscode/bin/
+## Desktop file .local/share/applications/ : https://github.com/microsoft/vscode/blob/master/resources/linux/code.desktop
+## place code.png in .local/share/icons 
+## preference change window.titleBarStyle to custom for file menu theme
 
 -----------------------------------------------------------------
 ## install master pdf editor
 ## get rpm file from https://code-industry.net/public/master-pdf-editor-4.3.89_qt5.x86_64.rpm
 # rpm -ivh master-pdf-editor-4.3.89_qt5.x86_64.rpm
+## Second method
+## get source file https://code-industry.net/public/master-pdf-editor-4.3.89_qt5.amd64.tar.gz
+## place into /opt
 
 -----------------------------------------------------------------
 ## install pycharm
@@ -81,9 +94,26 @@ fs.inotify.max_user_watches = 524288
 -----------------------------------------------------------------
 ## install KVM
 ## source: https://community.clearlinux.org/t/use-clear-for-a-vm-host/279/7
-# swupd bundle-add virt-manager-gui
+## source: https://docs.01.org/clearlinux/latest/get-started/virtual-machine-install/virt-manager.html
+# swupd bundle-add kvm-host virt-manager-gui
 # systemctl enable libvirtd.service
 # systemctl start libvirtd.service
+# usermod -G kvm -a $USER
+# usermod -G libvirt -a $USER
+## Network set up: Follow source: https://docs.01.org/clearlinux/latest/get-started/virtual-machine-install/virt-manager.html
+## TIAVSP
+--------------------------------------------------------------------
+## ssh virtual machines
+## On guest machine
+$ ip a 
+## Copy ip address shown in above command
+$ sudo systemctl status sshd
+$ sudo systemctl enable sshd
+
+## From host machine
+$ ssh-keygen
+## Complete steps shown in screen
+$ ssh-copy-id user@machine_ip
 
 -----------------------------------------------------------------
 ## set metered network
@@ -95,8 +125,10 @@ $ nmcli -f connection.metered connection show $CONNECTION
 $ nmcli connection modify $CONNECTION connection.metered yes
 
 -----------------------------------------------------------------
-flatpaks
-Celluloid
+## flatpaks
+## Celluloid
+## Add following to Preferences > Miscellaneous > Extra MPV options:
+--sub-font-size=40
 
 -----------------------------------------------------------------
 ## vim configuration
@@ -104,4 +136,257 @@ Celluloid
 ## plugin manager: vim-plug
 ## source: https://github.com/junegunn/vim-plug
 ## 
- 
+-----------------------------------------------------------------
+## Download appimage from: https://github.com/Splode/pomotroid/releases 
+$ chmod +x pomo*
+$ sudo mkdir -p /opt/pomodoro
+$ sudo mv $HOME/Downloads/pomo* /opt/pomodoro/pomotroid.AppImage
+$ vim $HOME/.local/share/applications/pomotroid.desktop
+## Download application icon and place it into $HOME/.local/share/icons/
+## Copy following to above file
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Pomodoro Timer
+Icon=pomotroid
+Exec=/opt/cloe/pomodoro/pomotroid.AppImage %f
+Comment=Timer
+Categories=Utility;
+Terminal=false
+
+-----------------------------------------------------------------
+## Third party app installation
+## source: https://github.com/clearlinux-pkgs-3rd-party/documentation#packages
+## Enable 3 party repo
+$ sudo swupd 3rd-party add greginator https://clear.greginator.xyz/
+## List all available bundles from 3 party
+$ sudo swupd 3rd-party bundle-list -a
+## Install ffmpeg
+$ sudo swupd 3rd-party bundle-add ffmpeg
+
+## For LD
+$ 
+sudo tee -a /etc/ld.so.conf << EOF
+/opt/3rd-party/bundles/greginator/usr/lib64
+/opt/3rd-party/bundles/greginator/usr/lib32
+EOF
+sudo ldconfig
+
+## For x11
+$
+sudo tee -a /etc/profile << EOF
+if [[ \$UID -ge 1000 && -d /opt/3rd-party/bundles/greginator/usr/lib64 && -z \$(echo \$LD_LIBRARY_PATH | grep -o /opt/3rd-party/bundles/greginator/usr/lib64) ]]
+then
+    export LD_LIBRARY_PATH="/opt/3rd-party/bundles/greginator/usr/lib64:/opt/3rd-party/bundles/greginator/usr/lib32:\${LD_LIBRARY_PATH}"
+fi
+EOF
+
+## For Wayland
+$
+sudo mkdir -p /etc/environment.d/
+echo LD_LIBRARY_PATH=/opt/3rd-party/bundles/greginator/usr/lib64:/opt/3rd-party/bundles/greginator/usr/lib32 | sudo tee /etc/environment.d/10-codecs.conf
+
+## For Firefox
+$
+echo "export LD_LIBRARY_PATH=/opt/3rd-party/bundles/greginator/usr/lib64:/opt/3rd-party/bundles/greginator/usr/lib32" >> ${HOME}/.config/firefox.conf
+--------------------------------------------------------------------
+## Youtube-dl
+youtube-dl --write-sub --sub-lang en --restrict-filenames --embed-subs 
+
+--------------------------------------------------------------------
+## Source:https://www.linode.com/docs/tools-reference/tools/how-to-install-neovim-and-plugins-with-vim-plug/
+## Download neovim appimage : https://github.com/neovim/neovim/releases
+
+$ wget https://github.com/neovim/neovim/releases/download/v0.4.3/nvim.appimage
+$ chmod u+x nvim.appimage && ./nvim.appimage
+$ mkdir -p ~/.local/bin
+
+cp nvim.appimage ~/.local/bin/nvim
+pip install neovim
+--------------------------------------------------------------------
+## source: https://vitux.com/how-to-automatically-disable-touchpad-when-mouse-is-connected-to-your-ubuntu-system/
+## Disable touchpad on external mouse
+
+## dconf editor
+## org.gnome.desktop.peripherals.touchpad.send-events >> disabled-on-external-mouse
+--------------------------------------------------------------------
+## Install citrix receiver
+## https://community.clearlinux.org/t/citrix-workspace-app/2610
+## Download rpm package from: https://www.citrix.com/downloads/workspace-app/linux/workspace-app-for-linux-latest.html
+cd Downloads/
+sudo rpm -ivh --nodeps --prefix=/opt ICAClientWeb-rhel-20.9.0.15-0.x86_64.rpm 
+sudo ln -sf /etc/ssl/certs/* /opt/Citrix/ICAClient/keystore/cacerts/
+sudo /opt/Citrix/ICAClient/util/ctx_rehash
+--------------------------------------------------------------------
+## Install android studio
+## https://developer.android.com/studio/install
+## Download android studio for linux for https://developer.android.com/studio#downloads
+## To install Android Studio on Linux, proceed as follows:
+## Unpack the .zip file you downloaded to an appropriate location for your applications, such as within /usr/local/ for your user profile, or /opt/ for shared users.
+## If you're using a 64-bit version of Linux, make sure you first install the required libraries for 64-bit machines.
+## To launch Android Studio, open a terminal, navigate to the android-studio/bin/ directory, and execute studio.sh.
+## Select whether you want to import previous Android Studio settings or not, then click OK.
+## The Android Studio Setup Wizard guides you through the rest of the setup, which includes downloading Android SDK components that are required for development.
+## Tip: To make Android Studio available in your list of applications, select Tools > Create Desktop Entry from the Android Studio menu bar.
+Required libraries for 64-bit machines
+
+If you are running a 64-bit version of Ubuntu, you need to install some 32-bit libraries with the following command:
+sudo apt-get install 	:i386 libncurses5:i386 libstdc++6:i386 lib32z1 libbz2-1.0:i386
+
+If you are running 64-bit Fedora, the command is:
+sudo yum install zlib.i686 ncurses-libs.i686 bzip2-libs.i686
+--------------------------------------------------------------------
+
+## DO NOT install conda using
+$ sudo swupd bundle-add conda
+$ conda init bash
+modified      /usr/condabin/conda
+modified      /usr/bin/conda
+modified      /usr/bin/conda-env
+modified      /usr/bin/activate
+modified      /usr/bin/deactivate
+modified      /usr/etc/profile.d/conda.sh
+modified      /usr/etc/fish/conf.d/conda.fish
+modified      /usr/shell/condabin/Conda.psm1
+modified      /usr/shell/condabin/conda-hook.ps1
+modified      /usr/lib/python3.8/site-packages/xontrib/conda.xsh
+modified      /usr/etc/profile.d/conda.csh
+no change     /usr/condabin/conda
+no change     /usr/bin/conda
+no change     /usr/bin/conda-env
+no change     /usr/bin/activate
+no change     /usr/bin/deactivate
+no change     /usr/etc/profile.d/conda.sh
+no change     /usr/etc/fish/conf.d/conda.fish
+no change     /usr/shell/condabin/Conda.psm1
+no change     /usr/shell/condabin/conda-hook.ps1
+no change     /usr/lib/python3.8/site-packages/xontrib/conda.xsh
+no change     /usr/etc/profile.d/conda.csh
+modified      /home/cloe/.bashrc
+
+## Install using
+$ bash miniconda.sh 
+$ conda config --set auto_activate_base false
+=========================================
+Create keyboard shortcut for Terminal in nautilus (file manager)
+## source: https://stackoverflow.com/questions/48840027/ubuntu-open-terminal-in-current-folder-with-shortcut
+
+##Create a script called Terminal (yes, without a extension) inside the folder ~/.local/share/nautilus/scripts with the following content:
+#! /bin/sh
+gnome-terminal
+
+##Make it executable, then close any Nautilus instance:
+$ chmod +x Terminal
+$ nautilus -q
+
+##Create (or edit) the ~/.config/nautilus/scripts-accels file adding these lines:
+F4 Terminal
+; Commented lines must have a space after the semicolon
+; Examples of other key combinations:
+; <Control>F12 Terminal
+; <Alt>F12 Terminal
+; <Shift>F12 Terminal
+
+===============================================
+cloe@suclear~ $ sudo rpm -U --nodeps --prefix=/opt Downloads/code-1.57.1-1623937083.el8.x86_64.rpm 
+Password: 
+warning: Downloads/code-1.57.1-1623937083.el8.x86_64.rpm: Header V4 RSA/SHA256 Signature, key ID be1229cf: NOKEY
+error: package code is not relocatable
+cloe@suclear~ $ sudo rpm -U --nodeps Downloads/code-1.57.1-1623937083.el8.x86_64.rpm 
+warning: Downloads/code-1.57.1-1623937083.el8.x86_64.rpm: Header V4 RSA/SHA256 Signature, key ID be1229cf: NOKEY
+cloe@suclear~ $ code
+bash: /opt/VSCode/bin/code: No such file or directory
+
+==============================================
+## Install winapps in kvm
+##source: https://github.com/Fmstrat/winapps
+## install freerdp. source: https://koji.fedoraproject.org/koji/buildinfo?buildID=1749341
+$ sudo rpm -i --nodeps freerdp-2.3.2-2.fc35.x86_64.rpm
+
+==============================================
+## Install menulibre for editing desktop files
+## source for downloads: https://fedora.pkgs.org/34/fedora-aarch64/menulibre-2.2.1-6.fc34.noarch.rpm.html
+## Binary package: https://download-ib01.fedoraproject.org/pub/fedora/linux/releases/34/Everything/aarch64/os/Packages/m/menulibre-2.2.1-6.fc34.noarch.rpm
+$ sudo rpm -ivh --nodeps menulibre-2.2.1-6.fc34.noarch.rpm 
+
+==============================================
+## Install freerdp form source
+## source: https://github.com/FreeRDP/FreeRDP/wiki/Compilation
+## Get latest source/ or from release latest release
+$ git clone https://github.com/FreeRDP/FreeRDP.git
+$ cd FreeRDP
+## install dependencies
+$ flatpak install flathub org.freedesktop.Platform//19.08 org.freedesktop.Platform.ffmpeg-full//19.08 org.freedesktop.Sdk//19.08
+## Compilation
+$ flatpak-builder --repo=repo build-dir packaging/flatpak/com.freerdp.FreeRDP.json
+## For a easy to install package run 
+$ flatpak build-bundle repo com.freerdp.FreeRDP.flatpak com.freerdp.FreeRDP --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo
+## Installation
+$ flatpak install com.freerdp.FreeRDP.flatpak
+
+## Access freerdp using
+$ flatpak run com.freerdp.FreeRDP --version
+
+## To make flatpak compiled freeRDP default, Create a file in ~/bin/xfreerdp with following content
+#!/usr/bin/sh
+/var/lib/flatpak/exports/bin/com.freerdp.FreeRDP "$@"
+
+## usage
+$ xfreerdp /u:user /p:malte /dynamic-resolution -aero -decorations /app:"%office%\POWERPNT.EXE" /v:192.168.100.214
+$ 
+
+==============================================
+## Install cudatext
+## download https://www.fosshub.com/CudaText.html?dwl=cudatext-linux-gtk2-amd64-1.138.1.0.tar.xz
+## extract tar file and place at /home/cloe
+## create .local/share/applications/cudatext.desktop
+[Desktop Entry]
+Name=CudaText
+GenericName=Text Editor
+Comment=Text and code editor. Syntax highlighting for 200+ languages. Supports all major encodings. Multi-carets and multi-selections. UI with tabs and sidebar. Search and replace with regex.
+Exec=/home/cloe/cudatext/cudatext %F
+Terminal=false
+Type=Application
+StartupNotify=true
+MimeType=text/plain;
+Categories=Utility;TextEditor;
+Icon=cudatext-512
+
+
+==============================================
+## Install vivaldi
+## https://downloads.vivaldi.com/stable/vivaldi-stable-4.0.2312.41-1.x86_64.rpm
+sudo rpm -ivh --nodeps --prefix=/opt vivaldi-stable-4.0.2312.41-1.x86_64.rpm 
+
+
+==============================================
+## Install surf browser
+## Download surf-2.0-11.fc34.x86_64.rpm, dmenu-5.0-2.fc34.x86_64.rpm, xprop-1.2.3-2.fc34.x86_64.rpm from https://rpmfind.net/
+sudo rpm -ivh --nodeps surf-2.0-11.fc34.x86_64.rpm dmenu-5.0-2.fc34.x86_64.rpm xprop-1.2.3-2.fc34.x86_64.rpm
+## ctrl-g to show dmenu for url
+
+
+==============================================
+## Install Viper Browser
+## Download appimage from: https://gateway.pinata.cloud/ipfs/bafybeigpgvylswvcjlfz5vfw34s42cwnipqcodsg4iwunqfoo7ugiknb24/Galacteek-0.5.1-x86_64.AppImage
+$ chmod +x Viper_Browser*
+$ sudo mkdir -p /opt/viper_browser
+$ sudo mv $HOME/Downloads/Viper_Browser* /opt/viper_browser/viper_browser.AppImage
+$ vim $HOME/.local/share/applications/viper_browser.desktop
+## Download application icon and place it into $HOME/.local/share/icons/
+## Copy following to above file
+
+[Desktop Entry]
+Type=Application
+Name=Viper Browser
+Comment=Fast and lightweight Qt web browser
+Exec=/opt/viper_browser/viper_browser.AppImage %u
+Terminal=false
+X-MultipleArgs=false
+Categories=Network;WebBrowser;
+Icon=viper-browser
+MimeType=text/html;text/xml;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;
+
+
+
+

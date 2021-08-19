@@ -2,7 +2,26 @@
 $ sudo -i
 ## mount /dev/sdb1 as /home 
 # mount /dev/sdb1 /home
-#
+
+## partition name: https://docs.01.org/clearlinux/latest/get-started/bare-metal-install-server.html#additional-partitions-optional
+##CLR_MNT_/home
+
+$ lsblk -o NAME,PARTLABEL,SIZE,TYPE,PARTTYPE,UUID
+$ cat /etc/fstab 
+UUID=1957be99-a8fd-4e6b-868a-2ccea6f88fe3 /home ext4 defaults 0 2
+UUID=fb3b10a0-bfda-4c61-9486-c940e83c37d3 /data1 ext4 defaults 0 2
+UUID=fa36188e-4aa5-4b78-9032-f0d638046a1c /data2 ext4 defaults 0 2
+-----------------------------------------------------------------
+## Useful guide: https://community.clearlinux.org/t/my-personal-clear-linux-software-installation-guide/4984
+-----------------------------------------------------------------
+## Change alt-tab behaviour to ungroup applications
+## Open dconf-editor
+## Go to org/gnome/desktop/wm/keybindings
+## Move the value '<Alt>Tab' from switch-applications to switch-windows
+## Optionally move '<Shift><Alt>Tab' from switch-applications-backward to switch-windows-backward
+## If you want switch-windows to work across desktops, not just in the current desktop, you can also uncheck org/gnome/shell/window-switcher/current-workspace-only 
+## Close dconf-editor
+## If using X11, press <Alt>F2, then type r to restart Gnome.
 -----------------------------------------------------------------
 ## Enable wifi for broadcom 43142
 ## Source: https://community.clearlinux.org/t/how-to-install-driver-for-broadcom-43142/1614/17
@@ -14,12 +33,12 @@ $ sudo -i
 ## install packages for dkms
 ## source: https://docs.01.org/clearlinux/latest/guides/kernel/kernel-modules-dkms.html#kernel-modules-dkms
 ## useful command: sudo clr-boot-manager list-kernels
-# swupd bundle-add kernel-native-dkms
+# swupd bundle-add kernel-lts-dkms
 # clr-boot-manager update
 ## Reboot
 $ git clone https://github.com/antoineco/broadcom-wl.git
 $ sudo cp -R broadcom-wl/ /usr/src/broadcom-wl-6.30.223.271
-# dkms install -m broadcom-wl -v 6.30.223.271
+$ sudo dkms install -m broadcom-wl -v 6.30.223.271
 $ modinfo wl
 ## if wl does not load then
 # mkdir /etc/modules-load.d/
@@ -40,24 +59,71 @@ $ modinfo wl
 # modprobe -r wl
 ## Add following line to /etc/modprobe.d/blacklist.conf
 blacklist wl
+-----------------------------------------------------------------
+## Compile ffmpeg for use with firefox
+## source: https://raw.githubusercontent.com/lebensterben/awesome-clear-linux/master/h264-firefox/install.bash
 
 -----------------------------------------------------------------
 ## Installing packages
-# swupd bundle-add machine-learning-basic
-## install vlc flatpak for better support
+# swupd bundle-add machine-learning-basic vlc mpv kvm-host virt-manager-gui qbittorrent desktop
+## change in /usr/share/applications/vlc.desktop to following
+Exec=env LD_LIBRARY_PATH=/opt/ffmpeg/lib /usr/bin/vlc --started-from-file %U
+
 -----------------------------------------------------------------
-## install vscode
-## Download source file: https://code.visualstudio.com/download
-## place downloaded source to /opt
-## executable at /opt/vscode/bin/
-## Desktop file .local/share/applications/ : https://github.com/microsoft/vscode/blob/master/resources/linux/code.desktop
-## place code.png in .local/share/icons 
+## Installing nix package manager
+## Source: https://nixos.org/download.html
+$ curl -L https://nixos.org/nix/install | sh
+$ . /home/user/.nix-profile/etc/profile.d/nix.sh 
+
+## source: https://unix.stackexchange.com/questions/310666/nix-desktop-files
+## add XDG_DATA_DIRS="$HOME/.nix-profile/share:${XDG_DATA_DIRS}" to .profile
+## alt-f2 restart for restarting the shell
+## upgrade nix
+$ nix-env -f "<nixpkgs>" -iA nixUnstable
+## always use -A while installation
+$ nix-env -iA nixpkgs.vscode-with-extensions nixpkgs.ungoogled-chromium nixpkgs.eternal-terminal nixpkgs.freerdp nixpkgs.smplayer nixpkgs.cudatext
+
+## Install an app
+$ nix-env -iA hello
+$ hello
+## Remove an app
+$ nix-env -e hello  
+## Search for an app
+$ nix-env -qa chromium 
+-----------------------------------------------------------------
+## vscode
 ## preference change window.titleBarStyle to custom for file menu theme
+
+## install chrome extensions in chromium
+## source https://github.com/NeverDecaf/chromium-web-store
+## Go to chrome://extensions and enable developer mode (toggle in top right).
+## Download the .crx from Releases (https://github.com/NeverDecaf/chromium-web-store/releases/latest) and drag-and-drop it onto the chrome://extensions page.
+
+
+## Gnome Extensions
+## Applications Menu: https://extensions.gnome.org/extension/6/applications-menu/
+## Bluetooth quick connect: https://extensions.gnome.org/extension/1401/bluetooth-quick-connect/
+## Clipboard Indicator : https://extensions.gnome.org/extension/779/clipboard-indicator/
+## Disconnect Wifi : https://extensions.gnome.org/extension/904/disconnect-wifi/
+## Net Speed Simplified : https://extensions.gnome.org/extension/3724/net-speed-simplified/
+## Open Weather : https://extensions.gnome.org/extension/750/openweather/
+## Places Status ndicator : https://extensions.gnome.org/extension/8/places-status-indicator/
+## Removable Drive Menu : https://extensions.gnome.org/extension/7/removable-drive-menu/
+## Screenshot Tool : https://extensions.gnome.org/extension/1112/screenshot-tool/
+## Sound Input & Output Device Chooser : https://extensions.gnome.org/extension/906/sound-output-device-chooser/
+## windowNavigator : https://extensions.gnome.org/extension/10/windownavigator/
+-----------------------------------------------------------------
+## flatpaks
+$ flatpak install --user Celluloid Element GNOME Web
+
+## Celluloid
+## Add following to Preferences > Miscellaneous > Extra MPV options:
+--sub-font-size=40
 
 -----------------------------------------------------------------
 ## install master pdf editor
 ## get rpm file from https://code-industry.net/public/master-pdf-editor-4.3.89_qt5.x86_64.rpm
-# rpm -ivh master-pdf-editor-4.3.89_qt5.x86_64.rpm
+$ sudo rpm -ivh --nodeps master-pdf-editor-4.3.89_qt5.x86_64.rpm
 ## Second method
 ## get source file https://code-industry.net/public/master-pdf-editor-4.3.89_qt5.amd64.tar.gz
 ## place into /opt
@@ -90,6 +156,26 @@ $ sudo -i
 
 fs.inotify.max_user_watches = 524288
 ================================================
+
+## Create keyboard shortcut for Terminal in nautilus (file manager)
+## source: https://stackoverflow.com/questions/48840027/ubuntu-open-terminal-in-current-folder-with-shortcut
+
+$ vim ~/.local/share/nautilus/scripts/Terminal
+##Create a script called Terminal (yes, without a extension) inside the folder ~/.local/share/nautilus/scripts with the following content:
+#! /bin/sh
+gnome-terminal
+
+##Make it executable, then close any Nautilus instance:
+$ chmod +x ~/.local/share/nautilus/scripts/Terminal
+$ nautilus -q
+
+##Create (or edit) the ~/.config/nautilus/scripts-accels file adding these lines:
+F4 Terminal
+; Commented lines must have a space after the semicolon
+; Examples of other key combinations:
+; <Control>F12 Terminal
+; <Alt>F12 Terminal
+; <Shift>F12 Terminal
 
 -----------------------------------------------------------------
 ## install KVM
@@ -125,12 +211,6 @@ $ nmcli -f connection.metered connection show $CONNECTION
 $ nmcli connection modify $CONNECTION connection.metered yes
 
 -----------------------------------------------------------------
-## flatpaks
-## Celluloid
-## Add following to Preferences > Miscellaneous > Extra MPV options:
---sub-font-size=40
-
------------------------------------------------------------------
 ## vim configuration
 ## config file location: ~/.vim/vimrc
 ## plugin manager: vim-plug
@@ -149,12 +229,13 @@ Version=1.0
 Type=Application
 Name=Pomodoro Timer
 Icon=pomotroid
-Exec=/opt/cloe/pomodoro/pomotroid.AppImage %f
+Exec=/opt/user/pomodoro/pomotroid.AppImage %f
 Comment=Timer
 Categories=Utility;
 Terminal=false
 
 -----------------------------------------------------------------
+## Not applicable any more
 ## Third party app installation
 ## source: https://github.com/clearlinux-pkgs-3rd-party/documentation#packages
 ## Enable 3 party repo
@@ -189,6 +270,11 @@ echo LD_LIBRARY_PATH=/opt/3rd-party/bundles/greginator/usr/lib64:/opt/3rd-party/
 ## For Firefox
 $
 echo "export LD_LIBRARY_PATH=/opt/3rd-party/bundles/greginator/usr/lib64:/opt/3rd-party/bundles/greginator/usr/lib32" >> ${HOME}/.config/firefox.conf
+--------------------------------------------------------------------
+## Install edge browser
+## source https://www.microsoftedgeinsider.com/en-us/download/
+$ sudo rpm -ivh --nodeps --prefix=/opt microsoft-edge-beta-93.0.961.11-1.x86_64.rpm 
+
 --------------------------------------------------------------------
 ## Youtube-dl
 youtube-dl --write-sub --sub-lang en --restrict-filenames --embed-subs 
@@ -262,40 +348,20 @@ no change     /usr/shell/condabin/Conda.psm1
 no change     /usr/shell/condabin/conda-hook.ps1
 no change     /usr/lib/python3.8/site-packages/xontrib/conda.xsh
 no change     /usr/etc/profile.d/conda.csh
-modified      /home/cloe/.bashrc
+modified      /home/user/.bashrc
 
 ## Install using
 $ bash miniconda.sh 
 $ conda config --set auto_activate_base false
-=========================================
-Create keyboard shortcut for Terminal in nautilus (file manager)
-## source: https://stackoverflow.com/questions/48840027/ubuntu-open-terminal-in-current-folder-with-shortcut
-
-##Create a script called Terminal (yes, without a extension) inside the folder ~/.local/share/nautilus/scripts with the following content:
-#! /bin/sh
-gnome-terminal
-
-##Make it executable, then close any Nautilus instance:
-$ chmod +x Terminal
-$ nautilus -q
-
-##Create (or edit) the ~/.config/nautilus/scripts-accels file adding these lines:
-F4 Terminal
-; Commented lines must have a space after the semicolon
-; Examples of other key combinations:
-; <Control>F12 Terminal
-; <Alt>F12 Terminal
-; <Shift>F12 Terminal
 
 ===============================================
-cloe@suclear~ $ sudo rpm -U --nodeps --prefix=/opt Downloads/code-1.57.1-1623937083.el8.x86_64.rpm 
+user@suclear~ $ sudo rpm -U --nodeps --prefix=/opt Downloads/code-1.57.1-1623937083.el8.x86_64.rpm 
 Password: 
 warning: Downloads/code-1.57.1-1623937083.el8.x86_64.rpm: Header V4 RSA/SHA256 Signature, key ID be1229cf: NOKEY
 error: package code is not relocatable
-cloe@suclear~ $ sudo rpm -U --nodeps Downloads/code-1.57.1-1623937083.el8.x86_64.rpm 
+user@suclear~ $ sudo rpm -U --nodeps Downloads/code-1.57.1-1623937083.el8.x86_64.rpm 
 warning: Downloads/code-1.57.1-1623937083.el8.x86_64.rpm: Header V4 RSA/SHA256 Signature, key ID be1229cf: NOKEY
-cloe@suclear~ $ code
-bash: /opt/VSCode/bin/code: No such file or directory
+user@suclear~ $ code
 
 ==============================================
 ## Install winapps in kvm
@@ -333,24 +399,6 @@ $ flatpak run com.freerdp.FreeRDP --version
 
 ## usage
 $ xfreerdp /u:user /p:malte /dynamic-resolution -aero -decorations /app:"%office%\POWERPNT.EXE" /v:192.168.100.214
-$ 
-
-==============================================
-## Install cudatext
-## download https://www.fosshub.com/CudaText.html?dwl=cudatext-linux-gtk2-amd64-1.138.1.0.tar.xz
-## extract tar file and place at /home/cloe
-## create .local/share/applications/cudatext.desktop
-[Desktop Entry]
-Name=CudaText
-GenericName=Text Editor
-Comment=Text and code editor. Syntax highlighting for 200+ languages. Supports all major encodings. Multi-carets and multi-selections. UI with tabs and sidebar. Search and replace with regex.
-Exec=/home/cloe/cudatext/cudatext %F
-Terminal=false
-Type=Application
-StartupNotify=true
-MimeType=text/plain;
-Categories=Utility;TextEditor;
-Icon=cudatext-512
 
 
 ==============================================
@@ -359,33 +407,17 @@ Icon=cudatext-512
 sudo rpm -ivh --nodeps --prefix=/opt vivaldi-stable-4.0.2312.41-1.x86_64.rpm 
 
 
-==============================================
-## Install surf browser
-## Download surf-2.0-11.fc34.x86_64.rpm, dmenu-5.0-2.fc34.x86_64.rpm, xprop-1.2.3-2.fc34.x86_64.rpm from https://rpmfind.net/
-sudo rpm -ivh --nodeps surf-2.0-11.fc34.x86_64.rpm dmenu-5.0-2.fc34.x86_64.rpm xprop-1.2.3-2.fc34.x86_64.rpm
-## ctrl-g to show dmenu for url
 
-
-==============================================
-## Install Viper Browser
-## Download appimage from: https://gateway.pinata.cloud/ipfs/bafybeigpgvylswvcjlfz5vfw34s42cwnipqcodsg4iwunqfoo7ugiknb24/Galacteek-0.5.1-x86_64.AppImage
-$ chmod +x Viper_Browser*
-$ sudo mkdir -p /opt/viper_browser
-$ sudo mv $HOME/Downloads/Viper_Browser* /opt/viper_browser/viper_browser.AppImage
-$ vim $HOME/.local/share/applications/viper_browser.desktop
-## Download application icon and place it into $HOME/.local/share/icons/
-## Copy following to above file
-
-[Desktop Entry]
-Type=Application
-Name=Viper Browser
-Comment=Fast and lightweight Qt web browser
-Exec=/opt/viper_browser/viper_browser.AppImage %u
-Terminal=false
-X-MultipleArgs=false
-Categories=Network;WebBrowser;
-Icon=viper-browser
-MimeType=text/html;text/xml;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;
+===============================================
+## rpms installed
+## master-pdf-editor libremenu
+## list install rpms
+$ rpm -qa
+## install rpm 
+$ sudo rpm -Uvh --nodeps --prefix=/opt microsoft-edge-beta-93.0.961.11-1.x86_64.rpm 
+## remove rpm
+$ sudo -evv microsoft-edge-beta-93.0.961.11-1.x86_64
+===============================================
 
 
 

@@ -53,7 +53,7 @@ sudo nano /etc/environment
 # enable amdgpu
 # source: https://askubuntu.com/questions/927601/i-think-im-using-radeon-instead-of-amdgpu-how-do-i-change
 # add amdgpu.si_support=1 radeon.si_support=0 to /etc/default/grub
-# GRUB_CMDLINE_LINUX_DEFAULT="quiet amdgpu.si_support=1 radeon.si_support=0"
+# GRUB_CMDLINE_LINUX_DEFAULT="quiet radeon.cik_support=0 amdgpu.cik_support=1"
 sudo update-grub2
 
 # enable tear free

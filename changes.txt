@@ -50,6 +50,23 @@ DRI_PRIME=1 glxinfo | grep "OpenGL renderer"
 # to always use dedicated graphic card add to /etc/environment DPI_PRIME=1 
 sudo nano /etc/environment
 
+# enable amdgpu
+# source: https://askubuntu.com/questions/927601/i-think-im-using-radeon-instead-of-amdgpu-how-do-i-change
+# add amdgpu.si_support=1 radeon.si_support=0 to /etc/default/grub
+# GRUB_CMDLINE_LINUX_DEFAULT="quiet amdgpu.si_support=1 radeon.si_support=0"
+sudo update-grub2
+
+# enable tear free
+# source: https://wiki.debian.org/AtiHowTo
+echo > /etc/X11/xorg.conf.d/20-amdgpu.conf <<EOF
+Section "Device"
+   Identifier  "AMD Graphics"
+   Driver      "amdgpu"
+   Option      "TearFree"  "true"
+EndSection
+EOF
+
+
 # firware realtek 
 # r8169 0000:07:00.0: firmware: failed to load rtl_nic/rtl8106e-1.fw (-2)
 sudo apt install firmware-realtek
